@@ -572,10 +572,8 @@ client_mode() {
       status_users)  status_users;;
       display_users) display_users;;
       version|v)     display_version;;
-      *)             if ! $wemux "$@"; then
-                       echo "To see a list of wemux commands enter 'wemux help'"
-                       exit 127
-                     fi;;
+      *)             echo "To see a list of wemux commands enter 'wemux help'"
+                     exit 127;;
     esac
   fi
 }
