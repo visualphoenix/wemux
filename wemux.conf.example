@@ -71,7 +71,19 @@ host_list=(change_this)
 
 ## Location of tmux socket, will have server name appended to end:
 ## Defaults to "/tmp/wemux"
-# socket-prefix="/tmp/wemux"
+# socket_prefix="/tmp/wemux"
+
+## A group owner to limit the people who can share the terminal
+## to use this, first create the group and add the desired users
+## to it.
+## $ sudo groupadd pair
+## $ for u in user1 user2 user3; do sudo useradd -G pair $u; done
+## Defaults to the host's group
+# socket_group="pair"
+
+## Socket permissions
+## Defaults to 1666
+# socket_perms="1664"
 
 ## Tmux Options:
 ## Defaults to -u to have tmux always attempt to use utf-8 mode.

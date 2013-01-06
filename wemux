@@ -49,6 +49,8 @@ version="3.1.0"
 # Default settings, modify them in the /usr/local/etc/wemux.conf file:
 host_list=(change_this_in_wemux_conf)
 socket_prefix="/tmp/wemux"
+socket_perms="1666"
+socket_group=""
 options="-u"
 allow_pair_mode="true"
 allow_rogue_mode="true"
@@ -292,7 +294,8 @@ host_mode() {
     if ! session_exists; then
       $wemux new-session -d -s $server
       # Open tmux socket to all users to allow clients to connect.
-      chmod 1777 $socket
+      chmod $socket_perms $socket
+      [ -z "$socket_group" ] || chgrp $socket_group $socket
       echo "wemux server started on '$server'."
     fi
     reattach
