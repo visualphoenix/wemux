@@ -95,17 +95,17 @@ load_server_name() {
     if [ -f ~/.wemux_last_server ]; then
       unclean_server=`cat ~/.wemux_last_server`
       # Sanitize loaded server name.
-      server=`sanitize_server_name $unclean_server`
+      export server=`sanitize_server_name $unclean_server`
       if ! [[ $unclean_server == $server ]]; then
         echo "$server" > ~/.wemux_last_server
       fi
     else
       # If ~/.wemux_last_server doesn't exist set to default_server_name
-      server="$default_server_name-`whoami`"
+      export server="$default_server_name-`whoami`"
     fi
   else
     # If allow_server_change is disabled, set to default_server_name
-    server="$default_server_name"
+    export server="$default_server_name"
   fi
 }
 
@@ -113,11 +113,11 @@ load_server_name() {
 build_wemux_prefix() {
   load_server_name
   # Set client's rogue mode session name.
-  client_session="$server-$username"
+  export client_session="$server-$username"
   # Set socket to include server name.
-  socket="${socket_prefix}-$server"
+  export socket="${socket_prefix}-$server"
   # Set $wemux to wemux server socket.
-  wemux="tmux -S $socket $options"
+  export wemux="tmux -S $socket $options"
 }
 
 # List all currently running wemux servers.
