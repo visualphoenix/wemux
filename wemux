@@ -80,10 +80,10 @@ fi
 # Remove all non alpha-numeric characters, convert to lowercase.
 sanitize_server_name() {
   local new_server=$@
-  local new_server=${new_server// /\-}
-  local new_server=${new_server//_/\-}
-  local new_server=${new_server//[^a-zA-Z0-9\-]/}
-  local new_server=`echo "$new_server" | tr '[A-Z]' '[a-z]'`
+  new_server=${new_server// /\-}
+  new_server=${new_server//_/\-}
+  new_server=${new_server//[^a-zA-Z0-9\-]/}
+  new_server=`echo "$new_server" | tr '[A-Z]' '[a-z]'`
   echo "$new_server"
 }
 
@@ -124,13 +124,14 @@ build_wemux_prefix() {
 list_active_servers() {
   if [ "$allow_server_change" == "true" ]; then
     if [ "$allow_server_list" == "true" ]; then
+      local num=0 ; local server_list
       wemux_server_sockets=$socket_prefix*
       for wemux_server in $wemux_server_sockets; do
         redirect=`tmux -S $wemux_server server-info 2>&1`; server_running=$?
         # Number each active server, give it its own line.
         if [ "$server_running" == 0 ]; then
           num=$[num+1]
-          server_name=`echo "$wemux_server" | sed -e "s,$socket_prefix-,,"`
+          local server_name=`echo "$wemux_server" | sed -e "s,$socket_prefix-,,"`
           # Add indicator for current wemux server.
           if [ "$server_name" == "$server" ]; then
             server_name="$server_name    <- current server"
@@ -161,6 +162,7 @@ list_active_servers() {
 # Only contains names. Formatted for being included as part of status bar.
 status_users() {
   if [ "$allow_user_list" == "true" ]; then
+    local line ; local name ; local tty ; local mode ; local users
     while IFS= read line; do
       read tty mode <<<`echo $line`
       # Get user associated with tty
@@ -184,10 +186,10 @@ status_users() {
 # More verbose, intended for use in terminal.
 list_users() {
   if [ "$allow_user_list" == "true" ]; then
-    redirect=`wemux server-info 2>&1`; server_running=$?
+    redirect=`wemux server-info 2>&1`; local server_running=$?
     if [ "$server_running" == 0 ]; then
       # Get list of users with status_users function.
-      users="`wemux status_users`"
+      local users="`status_users`" ; local num=0 ;local user_list
       # Number each user, give it its own line.
       for user in $users; do
           num=$[num+1]
