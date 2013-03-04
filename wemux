@@ -157,7 +157,7 @@ list_active_servers() {
 status_users() {
   if [ "$allow_user_list" == "true" ]; then
     while IFS= read line; do
-      read tty mode <<<$(echo $line)
+      read tty mode <<<`echo $line`
       # Get user associated with tty
       name=`stat -f%Su $tty 2>/dev/null` || name=`stat -c%U $tty 2>/dev/null`
       # If user is attached in read-only mode, set mode to [m]
@@ -182,7 +182,7 @@ list_users() {
     redirect=`wemux server-info 2>&1`; server_running=$?
     if [ "$server_running" == 0 ]; then
       # Get list of users with status_users function.
-      users="$(wemux status_users)"
+      users="`wemux status_users`"
       # Number each user, give it its own line.
       for user in $users; do
           num=$[num+1]
@@ -206,7 +206,7 @@ list_users() {
 
 # Display the currently attached users verbosely in a tmux message.
 display_users() {
-    redirect=`$wemux display-message "$(wemux users)" 2>&1`
+    redirect=`$wemux display-message "`wemux users`" 2>&1`
 }
 
 # The ugly group of redirects below solve the issue where tmux/epoll causes tmux
