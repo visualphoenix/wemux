@@ -125,8 +125,8 @@ list_active_servers() {
   if [ "$allow_server_change" == "true" ]; then
     if [ "$allow_server_list" == "true" ]; then
       local num=0 ; local server_list
-      wemux_server_sockets=$socket_prefix*
-      for wemux_server in $wemux_server_sockets; do
+      for wemux_server in $socket_prefix*; do
+        [ -S $wemux_server ] || continue
         redirect=`tmux -S $wemux_server server-info 2>&1`; server_running=$?
         # Number each active server, give it its own line.
         if [ "$server_running" == 0 ]; then
