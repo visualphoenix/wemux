@@ -136,7 +136,7 @@ list_active_servers() {
           if [ "$server_name" == "$server" ]; then
             server_name="$server_name    <- current server"
           fi
-          server_list="$server_list  $num. $server_name\n"
+          server_list="${server_list:-}  $num. $server_name\n"
         fi
       done
       if [ -z "$server_list" ]; then
@@ -170,8 +170,8 @@ status_users() {
       # If user is attached in read-only mode, set mode to [m]
       [[ $mode == "(ro)" ]] && mode="[m]" || mode=""
       # If user/mode is already is userlist, do not add them again.
-      if ! [[ "$users" =~ "$name$mode," ]]; then
-        users="$users$name$mode, "
+      if ! [[ "${users:-}" =~ "$name$mode," ]]; then
+        users="${users:-}$name$mode, "
       fi
     done < <($wemux list-clients | cut -f1,6 -d ' ' | sed s/://)
     # Strip last two characters ', '
@@ -194,7 +194,7 @@ list_users() {
       for user in $users; do
           num=$[num+1]
           user=`echo "$user" | sed -e "s/,//"`
-          user_list="$user_list  $num. $user\n"
+          user_list="${user_list:-}  $num. $user\n"
       done
       if [ -z "$user_list" ]; then
         echo "No wemux users attached to '$server'."
@@ -343,7 +343,7 @@ host_mode() {
   stop_server() {
     server_sockets=(`echo $socket_prefix*`)
     # If a specific server is supplied:
-    if [ $1 ]; then
+    if [ ! -z ${1:-} ]; then
       # If user enters a number, stop the server with that number in `wemux list`
       if [[ $@ =~ ^[0-9]+$ ]]; then
         socket=${server_sockets[$1-1]}
@@ -406,7 +406,7 @@ host_mode() {
   if [ -z "$1" ]; then
     announce_connection "host" start_server
   else
-    case "$1" in
+    case "${1:-}" in
       start|s)        announce_connection "host" start_server;;
       attach|a)       announce_connection "host" reattach;;
       stop|st)        shift; stop_server "$@";;
@@ -563,7 +563,7 @@ client_mode() {
   if [ -z "$1" ]; then
     smart_reattach
   else
-    case "$1" in
+    case "${1:-}" in
       mirror|m)      announce_connection "mirror" mirror_mode;;
       pair|p)        announce_connection "pair" pair_mode;;
       rogue|r)       announce_connection "rogue" rogue_mode;;
