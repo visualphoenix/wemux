@@ -173,7 +173,7 @@ status_users() {
       if ! [[ "$users" =~ "$name$mode," ]]; then
         users="$users$name$mode, "
       fi
-    done < <(wemux list-clients | cut -f1,6 -d ' ' | sed s/://)
+    done < <($wemux list-clients | cut -f1,6 -d ' ' | sed s/://)
     # Strip last two characters ', '
     echo "${users%??}"
   else
@@ -186,7 +186,7 @@ status_users() {
 # More verbose, intended for use in terminal.
 list_users() {
   if [ "$allow_user_list" == "true" ]; then
-    redirect=`wemux server-info 2>&1`; local server_running=$?
+    redirect=`$wemux server-info 2>&1`; local server_running=$?
     if [ "$server_running" == 0 ]; then
       # Get list of users with status_users function.
       local users="`status_users`" ; local num=0 ;local user_list
@@ -327,7 +327,7 @@ host_mode() {
       # Kill the sshd process of the supplied user.
       redirect=`sudo kill -9 $user_pid 2>&1`; kicked_successfully=$?
       # Remove any tmux sessions ending in "-kicked_user"
-      `wemux kill-session -t "*-$kicked_user" > /dev/null 2>&1`
+      `$wemux kill-session -t "*-$kicked_user" > /dev/null 2>&1`
       if [ "$kicked_successfully" == 0 ]; then
         echo "$kicked_user kicked successfully!"
       else
