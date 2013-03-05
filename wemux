@@ -500,8 +500,6 @@ client_mode() {
       announce_connection "pair" pair_mode
     elif has_rogue_session && [ "$allow_rogue_mode" == "true" ]; then
       announce_connection "rogue" rogue_mode
-    elif [ "$allow_pair" == "true" ]; then
-      announce_connection "pair" pair_mode
     elif session_exists; then
       announce_connection "mirror" $wemux attach -t $server -r
     else
