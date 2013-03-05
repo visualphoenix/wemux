@@ -8,9 +8,8 @@
 # Rogue mode, which  allows them to work in the same window (shared cursor) or
 # in another window (separate cursors) in the hosts tmux session.
 #
-# To set a user as host add their username to the host_list in the configuration
-# file located at $cfgdir/wemux.conf
-# Other configuations options are also located in $cfgdir/wemux.conf
+# Default configuations options are located in $cfgdir/wemux.conf
+# User configuations options are located in $HOME/.wemux.conf
 #
 # For environments with multiple hosts running their own independent servers
 # on the same machine wemux can join different servers with the wemux join
@@ -68,13 +67,14 @@ username=`whoami`
 # Set $EDITOR default to vi if not configured on host machine.
 editor=${EDITOR:="vi"}
 
-# Load configuration options from $cfgdir/wemux.conf
+# Load default configuration options from $cfgdir/wemux.conf
 cfgdir="@config_dir@"
 if [[ $cfgdir == *config_dir@ ]] ; then
   cfgdir="/usr/local/etc"
 fi
 
 [ -f $cfgdir/wemux.conf ] && . $cfgdir/wemux.conf
+[ -f $HOME/.wemux.conf ] && . $HOME/.wemux.conf
 
 # Sanitize server name, replace spaces and underscores with dashes.
 # Remove all non alpha-numeric characters, convert to lowercase.
@@ -420,7 +420,8 @@ host_mode() {
       status_users)   status_users;;
       display_users)  display_users;;
       version|v)      display_version;;
-      conf*|c)        $editor $cfgdir/wemux.conf;;
+      conf*|c)        [ ! -f $HOME/.wemux.conf ] && cp $cfgdir/wemux.conf $HOME/.wemux.conf
+                      $editor $HOME/.wemux.conf;;
       *)              if ! $wemux "$@"; then
                         echo "To see a list of wemux commands enter 'wemux help'"
                         exit 127
