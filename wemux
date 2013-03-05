@@ -417,7 +417,7 @@ host_mode() {
       reset|d)        change_server "$default_server_name";;
       list|l)         list_active_servers;;
       users|u)        list_users;;
-      kick)           kick_user $2;;
+      kick)           [ ! -z "${2:-}" ] && kick_user $2 || echo "Usage: wemux host kick <user>";;
       status_users)   status_users;;
       display_users)  display_users;;
       version|v)      display_version;;
