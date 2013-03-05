@@ -213,7 +213,7 @@ list_users() {
 
 # Display the currently attached users verbosely in a tmux message.
 display_users() {
-    redirect=`$wemux display-message "`wemux users`" 2>&1`
+    redirect=`$wemux display-message "`list_users`" 2>&1`
 }
 
 # The ugly group of redirects below solve the issue where tmux/epoll causes tmux
