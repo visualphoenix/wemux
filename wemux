@@ -243,7 +243,8 @@ kill_server_successful() {
 # All additional arguments get wrapped in the attach/detach messages.
 announce_connection() {
   connection_type=$1; shift; attach_commands="$@"
-  [ "$announce_attach" == "true" ] && redirect=`$wemux display-message \
+  session_exists && [ "$announce_attach" == "true" ] && \
+    redirect=`$wemux display-message \
     "$username has attached in $connection_type mode." 2>&1`
   $attach_commands
   [ "$announce_attach" == "true" ] && redirect=`$wemux display-message \
