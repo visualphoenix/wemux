@@ -46,7 +46,6 @@ version="3.1.0"
 
 # Setup and Configuration Files.
 # Default settings, modify them in the $cfgdir/wemux.conf file:
-host_list=(change_this_in_wemux_conf)
 socket_prefix="/tmp/wemux"
 socket_perms="1666"
 socket_group=""
@@ -237,6 +236,10 @@ kill_server_successful() {
   [ "$killed_successfully" == 0 ] && return 0 || return 1;
 }
 
+nested_session() {
+  [[ "${TMUX:-}" == *$socket* ]] && return 0 || return 1;
+}
+
 # Announce when user attaches/detaches from server.
 # Can be disabled by changing announce_attach to false in $cfgdir/wemux.conf
 # The first argument specifies the mode the user is attaching in for the message
@@ -295,7 +298,6 @@ display_version() {
   echo "To check for a newer version visit: http://www.github.com/zolrath/wemux"
 }
 
-# Host mode, used when user is listed in the host_list array in $cfgdir/wemux.conf
 host_mode() {
   # Start the server if it doesn't exist, otherwise reattach.
   start_server() {
@@ -374,17 +376,24 @@ host_mode() {
     if [ "$allow_server_change" == "true" ]; then
       echo "Current wemux server: $server"
     fi
+    if nested_session ; then
+      echo "Current session is nested: restricting commands"
+    fi
     echo ""
-    echo "Usage: wemux [command]"
+    echo "Usage: wemux host [command]"
     echo "To host a wemux server please use one of the following:"
     echo ""
-    echo "    [s]       start: Start the wemux server/attach to an existing wemux server."
-    echo "    [a]      attach: Attach to an existing wemux server."
+    if ! nested_session ; then
+      echo "    [s]       start: Start the wemux server/attach to an existing wemux server."
+      echo "    [a]      attach: Attach to an existing wemux server."
+    fi
     echo "    [k]        stop: Kill the wemux server '$server', delete its socket."
     echo ""
     if [ "$allow_server_change" == "true" ]; then
-      echo "    [j] join [name]: Join the specified wemux server."
-      echo "    [d]       reset: Join default wemux server: $default_server_name"
+      if ! nested_session ; then
+        echo "    [j] join [name]: Join the specified wemux server."
+        echo "    [d]       reset: Join default wemux server: $default_server_name"
+      fi
       if [ "$allow_server_list" == "true" ]; then
         echo "    [l]        list: List all currently active wemux servers."
       fi
@@ -401,10 +410,17 @@ host_mode() {
     echo "            no args: Start the wemux server/attach to an existing wemux server."
   }
 
-  # Host mode command handling:
-  # If no command given, call start server.
-  if [ -z "$1" ]; then
-    announce_connection "host" start_server
+  if [ ! -z "${1:-}" ] && nested_session ; then
+    case "${1:-}" in
+      start|s|attach|a|join|j|reset|d)        shift; ;;
+    esac
+  fi
+  if [ -z "${1:-}" ]; then
+    if ! nested_session ; then
+      announce_connection "host" start_server
+    else
+      display_host_commands
+    fi
   else
     case "${1:-}" in
       start|s)        announce_connection "host" start_server;;
@@ -424,14 +440,13 @@ host_mode() {
       conf*|c)        [ ! -f $HOME/.wemux.conf ] && cp $cfgdir/wemux.conf $HOME/.wemux.conf
                       $editor $HOME/.wemux.conf;;
       *)              if ! $wemux "$@"; then
-                        echo "To see a list of wemux commands enter 'wemux help'"
+                        echo "To see a list of wemux host commands enter 'wemux host help'"
                         exit 127
                       fi;;
     esac
   fi
 }
 
-# Client Mode, used when user is NOT listed in the host_list in $cfgdir/wemux.conf
 client_mode() {
   # Mirror mode, allows the user to view wemux server in read only mode.
   mirror_mode() {
@@ -515,23 +530,32 @@ client_mode() {
     if [ "$allow_server_change" == "true" ]; then
       echo "Current wemux server: $server"
     fi
+    if nested_session ; then
+      echo "Current session is nested: restricting commands"
+    fi
     echo ""
-    echo "Usage: wemux [command]"
+    echo "Usage: wemux client [command]"
     echo "To connect to wemux please use one of the following:"
     echo ""
-    echo "    [m]      mirror: Attach to '$server' in read-only mode."
-    if [ "$allow_pair_mode" == "true" ]; then
-      echo "    [p]        pair: Attach to '$server' in pair mode, which allows editing."
+    if ! nested_session ; then
+      echo "    [m]      mirror: Attach to '$server' in read-only mode."
+      if [ "$allow_pair_mode" == "true" ]; then
+        echo "    [p]        pair: Attach to '$server' in pair mode, which allows editing."
+      fi
     fi
     if [ "$allow_rogue_mode" == "true" ]; then
-      echo "    [r]       rogue: Attach to '$server' in rogue mode, allowing you to pair"
-      echo "                     and also work in other windows independent of the host."
+      if ! nested_session ; then
+        echo "    [r]       rogue: Attach to '$server' in rogue mode, allowing you to pair"
+        echo "                     and also work in other windows independent of the host."
+      fi
       echo "    [o]      logout: Log out of the current wemux rogue session."
     fi
     echo ""
     if [ "$allow_server_change" == "true" ]; then
-      echo "    [j] join [name]: Join the specified wemux server."
-      echo "    [d]       reset: Join default wemux server: $default_server_name"
+      if ! nested_session ; then
+        echo "    [j] join [name]: Join the specified wemux server."
+        echo "    [d]       reset: Join default wemux server: $default_server_name"
+      fi
       if [ "$allow_server_list" == "true" ]; then
         echo "    [l]        list: List all currently active wemux servers."
       fi
@@ -541,27 +565,36 @@ client_mode() {
     fi
     echo ""
     echo "    [h]        help: Display this screen."
-    if [ "$default_client_mode" == "rogue" ] && [ "$allow_rogue_mode" == "true" ]; then
-      echo "            no args: Attach to '$server' in rogue mode."
-    elif [ "$default_client_mode" == "pair" ] && [ "$allow_pair_mode" == "true" ]; then
-      echo "            no args: Attach to '$server' in pair mode."
-    elif [ "$allow_rogue_mode" == "true" ] &&  [ "$allow_pair_mode" == "true" ]; then
-      echo "            no args: Attach to rogue session on '$server' if it already exists,"
-      echo "                     otherwise, attach in pair mode."
-    elif [ "$allow_rogue_mode" == "true" ] &&  [ "$allow_pair_mode" == "false" ]; then
-      echo "            no args: Attach to rogue session on '$server' if it already exists,"
-      echo "                     otherwise, attach in mirror mode."
-    elif [ "$allow_pair_mode" == "true" ]; then
-      echo "            no args: Attach to '$server' in pair mode."
-    else
-      echo "            no args: Attach to '$server' in mirror mode."
+    if ! nested_session ; then
+      if [ "$default_client_mode" == "rogue" ] && [ "$allow_rogue_mode" == "true" ]; then
+        echo "            no args: Attach to '$server' in rogue mode."
+      elif [ "$default_client_mode" == "pair" ] && [ "$allow_pair_mode" == "true" ]; then
+        echo "            no args: Attach to '$server' in pair mode."
+      elif [ "$allow_rogue_mode" == "true" ] &&  [ "$allow_pair_mode" == "true" ]; then
+        echo "            no args: Attach to rogue session on '$server' if it already exists,"
+        echo "                     otherwise, attach in pair mode."
+      elif [ "$allow_rogue_mode" == "true" ] &&  [ "$allow_pair_mode" == "false" ]; then
+        echo "            no args: Attach to rogue session on '$server' if it already exists,"
+        echo "                     otherwise, attach in mirror mode."
+      elif [ "$allow_pair_mode" == "true" ]; then
+        echo "            no args: Attach to '$server' in pair mode."
+      else
+        echo "            no args: Attach to '$server' in mirror mode."
+      fi
     fi
   }
 
-  # Client mode command handling:
-  # If no command given, call smart_reattach
-  if [ -z "$1" ]; then
-    smart_reattach
+  if [ ! -z "${1:-}" ] && nested_session ; then
+    case "${1:-}" in
+      mirror|m|pair|p|rogue|r|edit|e|join|j|name|n|reset|d)        shift; ;;
+    esac
+  fi
+  if [ -z "${1:-}" ]; then
+    if ! nested_session ; then
+      smart_reattach
+    else
+      display_client_commands
+    fi
   else
     case "${1:-}" in
       mirror|m)      announce_connection "mirror" mirror_mode;;
@@ -579,46 +612,27 @@ client_mode() {
       status_users)  status_users;;
       display_users) display_users;;
       version|v)     display_version;;
-      *)             echo "To see a list of wemux commands enter 'wemux help'"
+      *)             echo "To see a list of wemux client commands enter 'wemux client help'"
                      exit 127;;
     esac
   fi
 }
 
-# Check if current user is listed in the host_list.
-user_is_a_host() {
-  for user in "${host_list[@]}"; do
-    [[ "$user" == "$username" ]] && return 0
-  done
-  return 1
-}
-
-allowed_nested_command() {
-  commands=(users u list l display_users status_users list-clients
-  kill-sesssion kick version v)
-  for command in "${commands[@]}"; do
-    [[ "$command" == "$1" ]] && return 0
-  done
-  return 1
-}
 # Create $wemux variable.
 
 build_wemux_prefix
 
 # Don't allow wemux to be run directly within a wemux server.
-if [[ "$TMUX" != *$socket* ]] || allowed_nested_command "$1" ; then
-  # Allow manual override to operate in client mode.
-  if [ "$1" = "client" ]; then
-    shift; client_mode "$@"
-  else
-    # If user is in host list, use host mode. If not, use client mode.
-    if user_is_a_host; then
-      host_mode "$@"
-    else
-      client_mode "$@"
-    fi
-  fi
+if [ "${1:-}" = "host" ]; then
+  shift; 
+  host_mode "${@:-}"
 else
-  echo "You're already attached to the wemux server on '$server'"
-  echo "wemux does not allow nesting wemux servers directly."
+  if [ "${1:-}" = "client" ]; then
+    shift;
+    client_mode "${@:-}"
+  else
+    echo "Usage: wemux [host|client] <command>"
+    echo "   eg: wemux host help"
+    echo "   eg: wemux client help"
+  fi
 fi

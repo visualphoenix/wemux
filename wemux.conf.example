@@ -4,14 +4,6 @@
 ## Uncomment an option (remove the # in front of it) if you would like to change
 ## the option from its default setting.
 
-####### HOST OPTIONS #######
-
-## All usernames in host_list will use wemux in host mode, allowing
-## them to create wemux servers for other users to attach to.
-## Add the usernames of users who should use wemux in host mode:
-## example: host_list=(zolrath csagan brocksamson)
-host_list=(change_this)
-
 ####### CLIENT OPTIONS #######
 
 ## Allow users to attach to the wemux server in pair mode.
